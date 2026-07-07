@@ -113,7 +113,7 @@ export default function ConvitePage() {
           Junta-te a ela na Imersão WEX Mulheres de Fogo
         </p>
         
-        {referrer && (
+        {referrer && referrer.meta_convidadas !== null && (
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-stone-500">
             <span>Meta dela: {referrer.meta_convidadas} amigas</span>
             <span>•</span>
@@ -122,7 +122,7 @@ export default function ConvitePage() {
         )}
 
         {/* Progresso do convidador */}
-        {referrer && (
+        {referrer && referrer.meta_convidadas !== null && (
           <div className="mt-6 p-4 bg-stone-900/50 rounded-2xl border border-stone-800/50 max-w-sm mx-auto">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-stone-500">Progresso</span>
@@ -131,10 +131,10 @@ export default function ConvitePage() {
               </span>
             </div>
             <div className="w-full bg-stone-800 rounded-full h-2">
-              <div 
+              <div
                 className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
-                style={{ 
-                  width: `${Math.min((referrer.convidadas_count / referrer.meta_convidadas) * 100, 100)}%` 
+                style={{
+                  width: `${Math.min((referrer.convidadas_count / referrer.meta_convidadas) * 100, 100)}%`
                 }}
               />
             </div>

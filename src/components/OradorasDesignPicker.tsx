@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Oradora } from '../types';
+import { Oradora } from '../types/database';
 
 interface DesignPickerProps {
   oradoras: Oradora[];

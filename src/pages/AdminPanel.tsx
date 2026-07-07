@@ -416,11 +416,14 @@ export default function AdminPanel() {
 
                     <div className="text-right">
                       <p className={`text-lg font-bold ${
-                        entry.convidadas_count >= entry.meta_convidadas 
-                          ? 'text-green-400' 
+                        entry.meta_convidadas !== null && entry.convidadas_count >= entry.meta_convidadas
+                          ? 'text-green-400'
                           : 'text-amber-400'
                       }`}>
-                        {entry.convidadas_count}/{entry.meta_convidadas}
+                        {entry.meta_convidadas !== null
+                          ? `${entry.convidadas_count}/${entry.meta_convidadas}`
+                          : entry.convidadas_count
+                        }
                       </p>
                       <p className="text-[10px] text-stone-500">
                         {entry.percentage}%
@@ -545,18 +548,24 @@ export default function AdminPanel() {
                       <td className="px-4 py-3 text-sm text-stone-200">{p.nome}</td>
                       <td className="px-4 py-3 text-sm text-stone-400">{p.email}</td>
                       <td className="px-4 py-3 text-sm text-stone-400">{p.whatsapp}</td>
-                      <td className="px-4 py-3 text-sm text-stone-400">{p.meta_convidadas}</td>
+                      <td className="px-4 py-3 text-sm text-stone-400">
+                        {p.meta_convidadas ?? '—'}
+                      </td>
                       <td className="px-4 py-3 text-sm">
                         <span className={`font-bold ${
-                          p.convidadas_count >= p.meta_convidadas 
-                            ? 'text-green-400' 
+                          p.meta_convidadas !== null && p.convidadas_count >= p.meta_convidadas
+                            ? 'text-green-400'
                             : 'text-amber-400'
                         }`}>
                           {p.convidadas_count}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {p.convidadas_count >= p.meta_convidadas ? (
+                        {p.meta_convidadas === null ? (
+                          <span className="px-2 py-1 bg-stone-800 text-stone-500 text-xs font-bold rounded-full">
+                            SEM META
+                          </span>
+                        ) : p.convidadas_count >= p.meta_convidadas ? (
                           <span className="px-2 py-1 bg-green-500/10 text-green-400 text-xs font-bold rounded-full">
                             META ATINGIDA
                           </span>

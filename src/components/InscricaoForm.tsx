@@ -13,21 +13,6 @@ interface InscricaoFormProps {
 export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {}) {
   const { generateReferralCode, getReferralLink, getWhatsAppShareText } = useReferral();
 
-  if (!isSupabaseConfigured) {
-    return (
-      <section id="form-section" className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950">
-        <div className="max-w-xl mx-auto text-center">
-          <div className="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-8">
-            <p className="text-amber-300 font-bold">Configuração em falta</p>
-            <p className="text-stone-400 text-sm mt-2">
-              As variáveis de ambiente do Supabase não estão configuradas no Vercel.
-            </p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-  
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -38,7 +23,8 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
   const [comoSoube, setComoSoube] = useState<'Instagram' | 'Facebook' | 'Indicação de amiga' | 'Igreja' | 'Outro'>('Instagram');
   const [expectativa, setExpectativa] = useState('');
   const [aceitouTermos, setAceitouTermos] = useState(false);
-  const [metaConvidadas, setMetaConvidadas] = useState<3 | 6 | 10 | 15>(3);
+  const [querConvidar, setQuerConvidar] = useState(false);
+  const [metaConvidadas, setMetaConvidadas] = useState<3 | 6 | 10 | 15 | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -53,6 +39,21 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
       setComoSoube('Indicação de amiga');
     }
   }, [referredByCode]);
+
+  if (!isSupabaseConfigured) {
+    return (
+      <section id="form-section" className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950">
+        <div className="max-w-xl mx-auto text-center">
+          <div className="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-8">
+            <p className="text-amber-300 font-bold">Configuração em falta</p>
+            <p className="text-stone-400 text-sm mt-2">
+              As variáveis de ambiente do Supabase não estão configuradas no Vercel.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
@@ -145,7 +146,8 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
     setComoSoube('Instagram');
     setExpectativa('');
     setAceitouTermos(false);
-    setMetaConvidadas(3);
+    setQuerConvidar(false);
+    setMetaConvidadas(null);
     setIsSuccess(false);
     setReferralCode('');
     setErrors({});
@@ -350,62 +352,88 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                       Queres ganhar brindes? Convida amigas!
                     </label>
                   </div>
-                  
-                  <p className="text-[11px] text-stone-400">
-                    Selecione quantas amigas vais convidar. Receberás um link exclusivo para partilhar!
-                  </p>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {META_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setMetaConvidadas(option.value)}
-                        className={`p-3 rounded-xl border text-center transition-all duration-200 cursor-pointer ${
-                          metaConvidadas === option.value
-                            ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_15px_rgba(234,88,12,0.2)]'
-                            : 'border-stone-800 bg-stone-950/50 hover:border-stone-700'
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setQuerConvidar(!querConvidar);
+                        if (querConvidar) setMetaConvidadas(null);
+                      }}
+                      className={`relative w-12 h-6 rounded-full transition-all duration-200 cursor-pointer ${
+                        querConvidar ? 'bg-amber-500' : 'bg-stone-700'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
+                          querConvidar ? 'translate-x-6' : 'translate-x-0'
                         }`}
-                      >
-                        <span className={`block text-lg font-bold ${
-                          metaConvidadas === option.value ? 'text-amber-400' : 'text-stone-300'
-                        }`}>
-                          {option.label}
-                        </span>
-                        <span className="block text-[9px] text-stone-500 uppercase mt-1">
-                          {option.prize}
-                        </span>
-                      </button>
-                    ))}
+                      />
+                    </button>
+                    <span className="text-sm text-stone-300">
+                      Quero convidar amigas
+                    </span>
                   </div>
 
-                  <div className="mt-3 p-3 bg-stone-900/50 rounded-xl border border-stone-800/50">
-                    <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-2">
-                      🎁 Níveis de Prêmios
-                    </p>
-                    <div className="space-y-1 text-[10px]">
-                      <div className="flex justify-between text-stone-400">
-                        <span>3 amigas</span>
-                        <span className="text-amber-300">Camisa Mulheres de Fogo</span>
-                      </div>
-                      <div className="flex justify-between text-stone-400">
-                        <span>6 amigas</span>
-                        <span className="text-amber-300">Agenda Personalizada</span>
-                      </div>
-                      <div className="flex justify-between text-stone-400">
-                        <span>10 amigas</span>
-                        <span className="text-amber-300">Agenda + Camisa</span>
-                      </div>
-                      <div className="flex justify-between text-stone-400">
-                        <span>15 amigas</span>
-                        <span className="text-amber-300 font-bold">Agenda + Camisa + Bíblia ★</span>
-                      </div>
-                    </div>
-                  </div>
+                  {querConvidar && (
+                    <>
+                      <p className="text-[11px] text-stone-400">
+                        Selecione quantas amigas vais convidar. Receberás um link exclusivo para partilhar!
+                      </p>
 
-                  <p className="text-[10px] text-stone-500 italic">
-                    * Não te preocupes se não atingires a meta. O importante é o coração de convidar!
-                  </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {META_OPTIONS.map((option) => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() => setMetaConvidadas(option.value)}
+                            className={`p-3 rounded-xl border text-center transition-all duration-200 cursor-pointer ${
+                              metaConvidadas === option.value
+                                ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_15px_rgba(234,88,12,0.2)]'
+                                : 'border-stone-800 bg-stone-950/50 hover:border-stone-700'
+                            }`}
+                          >
+                            <span className={`block text-lg font-bold ${
+                              metaConvidadas === option.value ? 'text-amber-400' : 'text-stone-300'
+                            }`}>
+                              {option.label}
+                            </span>
+                            <span className="block text-[9px] text-stone-500 uppercase mt-1">
+                              {option.prize}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="mt-3 p-3 bg-stone-900/50 rounded-xl border border-stone-800/50">
+                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-2">
+                          Niveis de Premios
+                        </p>
+                        <div className="space-y-1 text-[10px]">
+                          <div className="flex justify-between text-stone-400">
+                            <span>3 amigas</span>
+                            <span className="text-amber-300">Camisa Mulheres de Fogo</span>
+                          </div>
+                          <div className="flex justify-between text-stone-400">
+                            <span>6 amigas</span>
+                            <span className="text-amber-300">Agenda Personalizada</span>
+                          </div>
+                          <div className="flex justify-between text-stone-400">
+                            <span>10 amigas</span>
+                            <span className="text-amber-300">Agenda + Camisa</span>
+                          </div>
+                          <div className="flex justify-between text-stone-400">
+                            <span>15 amigas</span>
+                            <span className="text-amber-300 font-bold">Agenda + Camisa + Biblia *</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-stone-500 italic">
+                        * Nao te preocupes se nao atingires a meta. O importante e o coracao de convidar!
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">

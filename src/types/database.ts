@@ -1,3 +1,12 @@
+export interface Oradora {
+  id: string;
+  nome: string;
+  cargo: string;
+  subtitulo?: string;
+  fotoUrl?: string;
+  isMain?: boolean;
+}
+
 export interface Inscricao {
   id: string
   nome: string
@@ -10,7 +19,7 @@ export interface Inscricao {
   como_soube: 'Instagram' | 'Facebook' | 'Indicação de amiga' | 'Igreja' | 'Outro'
   expectativa?: string
   referral_code: string
-  meta_convidadas: 3 | 6 | 10 | 15
+  meta_convidadas: 3 | 6 | 10 | 15 | null
   convidadas_count: number
   referred_by?: string
   created_at: string

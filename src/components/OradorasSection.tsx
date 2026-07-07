@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Oradora } from '../types';
+import { Oradora } from '../types/database';
 import { Sparkles } from 'lucide-react';
 import OradorasDesignPicker from './OradorasDesignPicker';
 
@@ -11,7 +11,7 @@ export default function OradorasSection() {
       id: 'gilsa',
       nome: "Pra. Gilsa Bitumba",
       cargo: "Mentora Principal & Líder Espiritual da Imersão WEX",
-      fotoUrl: "/images/preletoras/Pastora Gilsa Bitumba.png",
+      fotoUrl: "/images/preletoras/pra-gilsa-bitumba.png",
       isMain: true
     },
     {
@@ -19,19 +19,19 @@ export default function OradorasSection() {
       nome: "Indira Luís Cariege",
       cargo: "Diaconisa, Terapeuta Emocional e Mentora Feminina",
       subtitulo: "Explosão Profética: Mulheres de Fogo",
-      fotoUrl: "/images/preletoras/Indira Luís cariege.png"
+      fotoUrl: "/images/preletoras/indira-luis-cariege.png"
     },
     {
       id: 'mari',
       nome: "Mari Pongue",
       cargo: "Convidada Especial de Louvor & Ministração",
-      fotoUrl: "/images/preletoras/Mari Pongue.png"
+      fotoUrl: "/images/preletoras/mari-pongue.png"
     },
     {
       id: 'daniela',
       nome: "Profetiza Daniela Mussumba",
       cargo: "Convidada de Ativação Profética e Revelação",
-      fotoUrl: "/images/preletoras/Profetiza Daniela Mussumba.png"
+      fotoUrl: "/images/preletoras/daniela-mussumba.png"
     }
   ];
 
