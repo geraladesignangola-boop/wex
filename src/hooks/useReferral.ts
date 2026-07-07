@@ -21,8 +21,9 @@ export function useReferral() {
   }
 
   const getReferralLink = (code: string): string => {
-    const baseUrl = import.meta.env.VITE_APP_URL && import.meta.env.VITE_APP_URL !== 'http://localhost:3000'
-      ? import.meta.env.VITE_APP_URL
+    const configuredUrl = import.meta.env.VITE_APP_URL
+    const baseUrl = configuredUrl && !configuredUrl.includes('localhost')
+      ? configuredUrl
       : window.location.origin
     return `${baseUrl}/convite?ref=${code}`
   }

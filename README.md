@@ -37,11 +37,11 @@ Configura as variáveis de ambiente no `.env`:
 ```
 VITE_SUPABASE_URL="https://SEU-PROJETO.supabase.co"
 VITE_SUPABASE_ANON_KEY="sua-chave-anon-aqui"
-VITE_APP_URL="http://localhost:3000"
+VITE_APP_URL="https://teu-dominio.netlify.app"
 ```
 
 ```bash
-npm run dev      # http://localhost:3000
+npm run dev      # servidor de desenvolvimento local
 npm run build    # build de produção para dist/
 npm run lint     # verificação TypeScript
 ```
