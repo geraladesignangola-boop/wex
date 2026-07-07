@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "postinstall": "npm rebuild @tailwindcss/oxide || true",
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
     "preview": "vite preview",
@@ -13,7 +12,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
-    "@tailwindcss/vite": "^4.1.14",
+    "@tailwindcss/postcss": "^4.1.14",
     "@types/scrollmagic": "^2.0.8",
     "@vitejs/plugin-react": "^5.0.4",
     "dotenv": "^17.2.3",
