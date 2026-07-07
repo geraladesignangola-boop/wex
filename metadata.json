@@ -1,0 +1,6 @@
+{
+  "name": "Imersão WEX",
+  "description": "Landing page oficial da Imersão WEX - Woman Experience, um evento de transformação espiritual e emocional feminina.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
