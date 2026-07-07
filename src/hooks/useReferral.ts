@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 
 export function useReferral() {
   const getReferralCodeFromURL = (): string | null => {
@@ -48,6 +48,11 @@ export function useReferralStats(referralCode: string) {
 
   useEffect(() => {
     const fetchStats = async () => {
+      if (!isSupabaseConfigured) {
+        setLoading(false)
+        return
+      }
+
       try {
         const { data } = await supabase.rpc('get_public_referrer_by_code', {
           ref_code: referralCode,

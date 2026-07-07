@@ -1,6 +1,10 @@
-import { supabase } from './supabase'
+import { supabase, isSupabaseConfigured } from './supabase'
 
 export async function signInAdmin(email: string, password: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase não configurado. Contacta o administrador.')
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
@@ -22,10 +26,13 @@ export async function signInAdmin(email: string, password: string) {
 }
 
 export async function signOut() {
+  if (!isSupabaseConfigured) return
   await supabase.auth.signOut()
 }
 
 export async function getCurrentAdmin() {
+  if (!isSupabaseConfigured) return null
+  
   const { data: { session } } = await supabase.auth.getSession()
   
   if (!session) return null

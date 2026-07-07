@@ -5,7 +5,7 @@ import {
   Download, LogOut, Loader2, MessageCircle, Mail, 
   Check, Eye, Gift, Clock, CheckCircle, Bell
 } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { getCurrentAdmin, signInAdmin, signOut } from '../lib/auth'
 import { 
   DashboardStats, RankingEntry, Notification, 
@@ -169,6 +169,28 @@ export default function AdminPanel() {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4 text-stone-400">
         A validar sessão administrativa...
+      </div>
+    )
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <Trophy className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-amber-100 mb-2">
+            Configuração em falta
+          </h1>
+          <p className="text-stone-400 text-sm mb-6">
+            As variáveis de ambiente do Supabase não estão configuradas no Vercel.
+          </p>
+          <a
+            href="/"
+            className="inline-block px-6 py-3 bg-amber-500 text-stone-950 font-bold rounded-xl text-sm"
+          >
+            Voltar à página principal
+          </a>
+        </div>
       </div>
     )
   }

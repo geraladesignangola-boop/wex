@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { UserPlus, Flame, Loader2 } from 'lucide-react'
 import InscricaoForm from '../components/InscricaoForm'
-import { supabase } from '../lib/supabase'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { ReferrerInfo } from '../types/database'
 
 export default function ConvitePage() {
@@ -15,7 +15,7 @@ export default function ConvitePage() {
 
   useEffect(() => {
     const fetchReferrer = async () => {
-      if (!refCode) {
+      if (!refCode || !isSupabaseConfigured) {
         setLoading(false)
         return
       }
@@ -45,6 +45,28 @@ export default function ConvitePage() {
     return (
       <div className="min-h-screen bg-stone-950 flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    )
+  }
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <Flame className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-amber-100 mb-2">
+            Configuração em falta
+          </h1>
+          <p className="text-stone-400 text-sm mb-6">
+            As variáveis de ambiente do Supabase não estão configuradas. Contacta o administrador.
+          </p>
+          <a
+            href="/"
+            className="inline-block px-6 py-3 bg-amber-500 text-stone-950 font-bold rounded-xl text-sm"
+          >
+            Voltar à página principal
+          </a>
+        </div>
       </div>
     )
   }

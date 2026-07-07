@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Flame, Users, Download, Trash2, ShieldCheck, Gift, Copy, MessageCircle, Loader2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useReferral } from '../hooks/useReferral';
 import { META_OPTIONS } from '../types/database';
 
@@ -12,6 +12,21 @@ interface InscricaoFormProps {
 
 export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {}) {
   const { generateReferralCode, getReferralLink, getWhatsAppShareText } = useReferral();
+
+  if (!isSupabaseConfigured) {
+    return (
+      <section id="form-section" className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950">
+        <div className="max-w-xl mx-auto text-center">
+          <div className="bg-amber-950/30 border border-amber-500/30 rounded-2xl p-8">
+            <p className="text-amber-300 font-bold">Configuração em falta</p>
+            <p className="text-stone-400 text-sm mt-2">
+              As variáveis de ambiente do Supabase não estão configuradas no Vercel.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
