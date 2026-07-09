@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { UserPlus, Flame, Loader2 } from 'lucide-react'
@@ -9,9 +9,11 @@ import { ReferrerInfo } from '../types/database'
 export default function ConvitePage() {
   const [searchParams] = useSearchParams()
   const refCode = searchParams.get('ref')
+  const source = searchParams.get('src') || 'direct'
   const [referrer, setReferrer] = useState<ReferrerInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasLoggedClick = useRef(false)
 
   useEffect(() => {
     const fetchReferrer = async () => {
@@ -25,13 +27,35 @@ export default function ConvitePage() {
           ref_code: refCode,
         })
 
-        if (error) throw error
-        const foundReferrer = data?.[0] ?? null
+        let foundReferrer = data?.[0] ?? null
+        if (error || !foundReferrer) {
+          const { data: fallbackData } = await supabase
+            .from('inscricoes')
+            .select('id, nome, meta_convidadas, convidadas_count, referral_code')
+            .eq('referral_code', refCode)
+            .maybeSingle()
+          foundReferrer = fallbackData || null
+        }
+
         if (!foundReferrer) {
           throw new Error('not_found')
         }
+
         setReferrer(foundReferrer)
-      } catch (err) {
+
+        if (!hasLoggedClick.current) {
+          hasLoggedClick.current = true
+          try {
+            await supabase.rpc('log_referral_link_click', {
+              ref_code: refCode,
+              p_source: source,
+              p_user_agent: navigator.userAgent,
+            })
+          } catch (clickError) {
+            console.warn('Não foi possível registar o clique do link.', clickError)
+          }
+        }
+      } catch {
         setError('Código de convite inválido ou expirado')
       } finally {
         setLoading(false)
@@ -39,7 +63,7 @@ export default function ConvitePage() {
     }
 
     fetchReferrer()
-  }, [refCode])
+  }, [refCode, source])
 
   if (loading) {
     return (
@@ -95,7 +119,6 @@ export default function ConvitePage() {
 
   return (
     <div className="min-h-screen bg-stone-950 py-12 px-4">
-      {/* Banner do convidador */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -104,45 +127,44 @@ export default function ConvitePage() {
         <div className="inline-flex p-4 bg-amber-500/10 border border-amber-500/20 rounded-full mb-4">
           <UserPlus className="w-8 h-8 text-amber-500" />
         </div>
-        
+
         <h1 className="text-2xl md:text-3xl font-bold text-amber-100 font-serif">
           {referrer?.nome} convidou-te!
         </h1>
-        
+
         <p className="mt-3 text-stone-400 text-sm">
           Junta-te a ela na Imersão WEX Mulheres de Fogo
         </p>
-        
-        {referrer && referrer.meta_convidadas !== null && (
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-stone-500">
-            <span>Meta dela: {referrer.meta_convidadas} amigas</span>
-            <span>•</span>
-            <span>Já trouxe: {referrer.convidadas_count}</span>
-          </div>
-        )}
 
-        {/* Progresso do convidador */}
-        {referrer && referrer.meta_convidadas !== null && (
-          <div className="mt-6 p-4 bg-stone-900/50 rounded-2xl border border-stone-800/50 max-w-sm mx-auto">
-            <div className="flex items-center justify-between text-xs mb-2">
-              <span className="text-stone-500">Progresso</span>
-              <span className="text-amber-400 font-bold">
-                {referrer.convidadas_count}/{referrer.meta_convidadas}
+        {referrer && (
+          <div className="mt-4 space-y-2">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-stone-900/70 border border-stone-800 text-xs text-stone-400">
+              <span>Total de convidadas:</span>
+              <span className="font-bold text-amber-400">{referrer.convidadas_count}</span>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2 text-[10px] text-stone-500">
+              <span className="px-3 py-1 rounded-full bg-stone-900 border border-stone-800">
+                Cliques: {referrer.total_clicks ?? 0}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-stone-900 border border-stone-800">
+                WhatsApp: {referrer.whatsapp_clicks ?? 0}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-stone-900 border border-stone-800">
+                Facebook: {referrer.facebook_clicks ?? 0}
+              </span>
+              <span className="px-3 py-1 rounded-full bg-stone-900 border border-stone-800">
+                Instagram: {referrer.instagram_clicks ?? 0}
               </span>
             </div>
-            <div className="w-full bg-stone-800 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-amber-500 to-orange-500 h-2 rounded-full transition-all duration-500"
-                style={{
-                  width: `${Math.min((referrer.convidadas_count / referrer.meta_convidadas) * 100, 100)}%`
-                }}
-              />
-            </div>
           </div>
         )}
+
+        <p className="mt-4 text-[11px] text-stone-500">
+          O pódio final é definido pelo total de convidadas no encerramento da campanha.
+        </p>
       </motion.div>
 
-      {/* Formulário de inscrição */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

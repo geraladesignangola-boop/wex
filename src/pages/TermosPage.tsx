@@ -68,7 +68,7 @@ export default function TermosPage() {
             <p>
               O sistema de referrals é voluntário. Ao partilhar o seu link exclusivo, 
               o utilizador autoriza que o seu nome seja exibido publicamente no ranking de convidadoras. 
-              Os prémios são entregues presencialmente no dia do evento, mediante apresentação da notificação.
+              O pódio final é apurado pelo total de convidadas no encerramento da campanha e os prémios são entregues presencialmente no dia do evento, mediante apresentação da notificação.
             </p>
           </section>
 

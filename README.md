@@ -50,6 +50,6 @@ npm run lint     # verificação TypeScript
 
 - Formulário de inscrição com validação server-side (Supabase RPC)
 - Sistema de referrals com links exclusivos e QR codes
-- Prémios por metas de convidadas (3, 6, 10, 15)
+- Prémios por pódio final de convidadas: 1º Bíblia, 2º Agenda, 3º T-shirt
 - Painel administrativo com dashboard, ranking e notificações
-- Notificações automáticas via WhatsApp e Email ao atingir metas
+- Notificações via WhatsApp e Email após a apuração do pódio

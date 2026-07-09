@@ -1,44 +1,62 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Check, Flame, Users, Download, Trash2, ShieldCheck, Gift, Copy, MessageCircle, Loader2 } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
-import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { useReferral } from '../hooks/useReferral';
-import { META_OPTIONS } from '../types/database';
+import React, { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import {
+  Check,
+  Flame,
+  Users,
+  ShieldCheck,
+  Gift,
+  Copy,
+  MessageCircle,
+  Loader2,
+  Facebook,
+  Instagram,
+  Link2,
+} from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
+import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { useReferral } from '../hooks/useReferral'
 
 interface InscricaoFormProps {
-  referredByCode?: string;
+  referredByCode?: string
 }
 
+type ComoSoubeOption = 'Instagram' | 'Facebook' | 'Indicação de amiga' | 'Igreja' | 'Outro'
+
 export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {}) {
-  const { generateReferralCode, getReferralLink, getWhatsAppShareText } = useReferral();
+  const { generateReferralCode, getReferralLink, getWhatsAppShareText } = useReferral()
 
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [morada, setMorada] = useState('');
-  const [igreja, setIgreja] = useState('');
-  const [faixaEtaria, setFaixaEtaria] = useState<'18-25' | '26-35' | '36-45' | '46+'>('26-35');
-  const [comoSoube, setComoSoube] = useState<'Instagram' | 'Facebook' | 'Indicação de amiga' | 'Igreja' | 'Outro'>('Instagram');
-  const [expectativa, setExpectativa] = useState('');
-  const [aceitouTermos, setAceitouTermos] = useState(false);
-  const [querConvidar, setQuerConvidar] = useState(false);
-  const [metaConvidadas, setMetaConvidadas] = useState<3 | 6 | 10 | 15 | null>(null);
+  const [nome, setNome] = useState('')
+  const [email, setEmail] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
+  const [morada, setMorada] = useState('')
+  const [igreja, setIgreja] = useState('')
+  const [localizacao, setLocalizacao] = useState('')
+  const [recomendacao, setRecomendacao] = useState('')
+  const [observacoes, setObservacoes] = useState('')
+  const [faixaEtaria, setFaixaEtaria] = useState<'18-25' | '26-35' | '36-45' | '46+'>('26-35')
+  const [comoSoube, setComoSoube] = useState<ComoSoubeOption>('Instagram')
+  const [expectativa, setExpectativa] = useState('')
+  const [aceitouTermos, setAceitouTermos] = useState(false)
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [lastSubmitTime, setLastSubmitTime] = useState(0);
-
-  const [referralCode, setReferralCode] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [lastSubmitTime, setLastSubmitTime] = useState(0)
+  const [referralCode, setReferralCode] = useState('')
+  const [copiedSource, setCopiedSource] = useState<string | null>(null)
 
   useEffect(() => {
     if (referredByCode) {
-      setComoSoube('Indicação de amiga');
+      setComoSoube('Indicação de amiga')
     }
-  }, [referredByCode]);
+  }, [referredByCode])
+
+  const directLink = useMemo(() => getReferralLink(referralCode), [getReferralLink, referralCode])
+  const whatsappLink = useMemo(() => getReferralLink(referralCode, 'whatsapp'), [getReferralLink, referralCode])
+  const facebookLink = useMemo(() => getReferralLink(referralCode, 'facebook'), [getReferralLink, referralCode])
+  const instagramLink = useMemo(() => getReferralLink(referralCode, 'instagram'), [getReferralLink, referralCode])
 
   if (!isSupabaseConfigured) {
     return (
@@ -52,38 +70,39 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
           </div>
         </div>
       </section>
-    );
+    )
   }
 
   const validate = () => {
-    const newErrors: { [key: string]: string } = {};
-    if (!nome.trim()) newErrors.nome = 'O nome completo é obrigatório';
-    if (!email.trim()) newErrors.email = 'O email é obrigatório';
-    if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Email inválido';
-    if (email.includes('..')) newErrors.email = 'Email inválido';
-    if (!telefone.trim()) newErrors.telefone = 'O número de telefone é obrigatório';
-    if (!whatsapp.trim()) newErrors.whatsapp = 'O número do WhatsApp é obrigatório';
-    if (!morada.trim()) newErrors.morada = 'A morada / bairro é obrigatória';
-    if (!aceitouTermos) newErrors.aceitouTermos = 'Deves aceitar os termos de participação';
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const nextErrors: Record<string, string> = {}
+    if (!nome.trim()) nextErrors.nome = 'O nome completo é obrigatório'
+    if (!email.trim()) nextErrors.email = 'O email é obrigatório'
+    if (!/\S+@\S+\.\S+/.test(email)) nextErrors.email = 'Email inválido'
+    if (email.includes('..')) nextErrors.email = 'Email inválido'
+    if (!telefone.trim()) nextErrors.telefone = 'O número de telefone é obrigatório'
+    if (!whatsapp.trim()) nextErrors.whatsapp = 'O número do WhatsApp é obrigatório'
+    if (!morada.trim()) nextErrors.morada = 'A morada / bairro é obrigatória'
+    if (!aceitouTermos) nextErrors.aceitouTermos = 'Deves aceitar os termos de participação'
+
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+    e.preventDefault()
+    if (!validate()) return
 
-    const now = Date.now();
+    const now = Date.now()
     if (now - lastSubmitTime < 10000) {
-      setErrors({ submit: 'Aguarde 10 segundos antes de tentar novamente.' });
-      return;
+      setErrors({ submit: 'Aguarde 10 segundos antes de tentar novamente.' })
+      return
     }
-    setLastSubmitTime(now);
-    setIsSubmitting(true);
+
+    setLastSubmitTime(now)
+    setIsSubmitting(true)
 
     try {
-      const newReferralCode = generateReferralCode(nome);
+      const newReferralCode = generateReferralCode(nome)
       const { data, error } = await supabase.rpc('create_public_inscricao', {
         p_nome: nome,
         p_email: email,
@@ -91,71 +110,85 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
         p_whatsapp: whatsapp,
         p_morada: morada,
         p_igreja: igreja || null,
+        p_localizacao: localizacao || null,
+        p_recomendacao: recomendacao || null,
+        p_observacoes: observacoes || null,
         p_faixa_etaria: faixaEtaria,
         p_como_soube: comoSoube,
         p_expectativa: expectativa || null,
         p_referral_code: newReferralCode,
-        p_meta_convidadas: metaConvidadas,
+        p_meta_convidadas: null,
         p_referred_by_code: referredByCode || null,
-      });
+      })
 
       if (error) {
         if (error.message.includes('duplicate_registration')) {
-          setErrors({ email: 'Este email já está registado' });
-          setIsSubmitting(false);
-          return;
+          setErrors({ email: 'Este email já está registado' })
+          setIsSubmitting(false)
+          return
         }
-        throw error;
+        throw error
       }
 
-      const createdRow = Array.isArray(data) ? data[0] : data;
-      setReferralCode(createdRow?.referral_code || newReferralCode);
-      setIsSubmitting(false);
-      setIsSuccess(true);
-      
-      const element = document.getElementById('form-section');
+      const createdRow = Array.isArray(data) ? data[0] : data
+      setReferralCode(createdRow?.referral_code || newReferralCode)
+      setIsSubmitting(false)
+      setIsSuccess(true)
+
+      const element = document.getElementById('form-section')
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: 'smooth' })
       }
-    } catch (error: any) {
-      console.error('Erro ao inscrever:', error);
-      setErrors({ submit: 'Erro ao processar inscrição. Tenta novamente.' });
-      setIsSubmitting(false);
+    } catch (error) {
+      console.error('Erro ao inscrever:', error)
+      setErrors({ submit: 'Erro ao processar inscrição. Tenta novamente.' })
+      setIsSubmitting(false)
     }
-  };
+  }
 
-  const handleCopyLink = async () => {
+  const copyToClipboard = async (value: string, source: string) => {
     try {
-      const link = getReferralLink(referralCode);
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      await navigator.clipboard.writeText(value)
+      setCopiedSource(source)
+      setTimeout(() => setCopiedSource((current) => (current === source ? null : current)), 2000)
     } catch {
-      setErrors({ submit: 'Não foi possível copiar o link agora.' });
+      setErrors({ submit: 'Não foi possível copiar o link agora.' })
     }
-  };
+  }
+
+  const shareOnFacebook = () => {
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(facebookLink)}`
+    window.open(shareUrl, '_blank', 'noopener,noreferrer')
+  }
+
+  const shareOnInstagram = async () => {
+    const instagramText = `Inscreve-te na Imersão WEX Mulheres de Fogo 🔥\n${instagramLink}`
+    await copyToClipboard(instagramText, 'instagram')
+  }
 
   const handleResetForm = () => {
-    setNome('');
-    setEmail('');
-    setTelefone('');
-    setWhatsapp('');
-    setMorada('');
-    setIgreja('');
-    setFaixaEtaria('26-35');
-    setComoSoube('Instagram');
-    setExpectativa('');
-    setAceitouTermos(false);
-    setQuerConvidar(false);
-    setMetaConvidadas(null);
-    setIsSuccess(false);
-    setReferralCode('');
-    setErrors({});
-  };
+    setNome('')
+    setEmail('')
+    setTelefone('')
+    setWhatsapp('')
+    setMorada('')
+    setIgreja('')
+    setLocalizacao('')
+    setRecomendacao('')
+    setObservacoes('')
+    setFaixaEtaria('26-35')
+    setComoSoube('Instagram')
+    setExpectativa('')
+    setAceitouTermos(false)
+    setIsSuccess(false)
+    setReferralCode('')
+    setErrors({})
+    setCopiedSource(null)
+  }
 
   return (
-    <section 
-      id="form-section" 
+    <section
+      id="form-section"
       className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 relative overflow-hidden"
     >
       <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-amber-950/20 to-transparent pointer-events-none" />
@@ -163,7 +196,6 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-600/5 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-xl mx-auto relative z-10">
-        
         <div className="text-center mb-10">
           <div className="inline-flex p-2 bg-amber-500/10 border border-amber-500/20 rounded-full mb-3">
             <Flame className="w-5 h-5 text-amber-500 animate-pulse" />
@@ -172,7 +204,7 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
             Garante a Tua Vaga
           </h2>
           <p className="mt-3 text-sm text-stone-400 max-w-md mx-auto">
-            O despertar está pronto para começar. Inscreve-te agora de forma gratuita. Vagas estritamente limitadas para a capacidade da Mediateca.
+            O despertar está pronto para começar. Inscreve-te agora de forma gratuita. Vagas limitadas para a capacidade da Mediateca.
           </p>
         </div>
 
@@ -186,7 +218,7 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
               className="bg-stone-900/80 backdrop-blur-md border border-amber-500/20 rounded-3xl p-6 md:p-10 shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-red-600 via-amber-500 to-yellow-400" />
-              
+
               {referredByCode && (
                 <div className="mb-6 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center">
                   <p className="text-xs text-amber-300">
@@ -195,130 +227,119 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                   </p>
                 </div>
               )}
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
-                
-                <div className="space-y-1.5">
-                  <label htmlFor="nome-completo" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                    Nome Completo <span className="text-red-500">*</span>
-                  </label>
+                <Field label="Nome Completo" required htmlFor="nome-completo" error={errors.nome}>
                   <input
                     id="nome-completo"
                     type="text"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     placeholder="Escreve o teu nome completo"
-                    className={`w-full bg-stone-950/90 border ${errors.nome ? 'border-red-500' : 'border-stone-800 focus:border-amber-500'} text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600 shadow-inner`}
+                    className={inputClass(errors.nome)}
                   />
-                  {errors.nome && <p className="text-xs text-red-400">{errors.nome}</p>}
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="email-contacto" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                    Email <span className="text-red-500">*</span>
-                  </label>
+                <Field label="Email" required htmlFor="email-contacto" error={errors.email}>
                   <input
                     id="email-contacto"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="teu@email.com"
-                    className={`w-full bg-stone-950/90 border ${errors.email ? 'border-red-500' : 'border-stone-800 focus:border-amber-500'} text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600`}
+                    className={inputClass(errors.email)}
                   />
-                  {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
-                </div>
+                </Field>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  <div className="space-y-1.5">
-                    <label htmlFor="telefone-contacto" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                      Telemóvel / Contacto <span className="text-red-500">*</span>
-                    </label>
+                  <Field label="Telemóvel / Contacto" required htmlFor="telefone-contacto" error={errors.telefone}>
                     <input
                       id="telefone-contacto"
                       type="tel"
                       value={telefone}
                       onChange={(e) => setTelefone(e.target.value)}
                       placeholder="Ex: 923 000 000"
-                      className={`w-full bg-stone-950/90 border ${errors.telefone ? 'border-red-500' : 'border-stone-800 focus:border-amber-500'} text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600`}
+                      className={inputClass(errors.telefone)}
                     />
-                    {errors.telefone && <p className="text-xs text-red-400">{errors.telefone}</p>}
-                  </div>
+                  </Field>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="whatsapp-contacto" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                      WhatsApp <span className="text-red-500">*</span>
-                    </label>
+                  <Field label="WhatsApp" required htmlFor="whatsapp-contacto" error={errors.whatsapp}>
                     <input
                       id="whatsapp-contacto"
                       type="tel"
                       value={whatsapp}
                       onChange={(e) => setWhatsapp(e.target.value)}
                       placeholder="Ex: 923 000 000"
-                      className={`w-full bg-stone-950/90 border ${errors.whatsapp ? 'border-red-500' : 'border-stone-800 focus:border-amber-500'} text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600`}
+                      className={inputClass(errors.whatsapp)}
                     />
-                    {errors.whatsapp && <p className="text-xs text-red-400">{errors.whatsapp}</p>}
-                  </div>
-
+                  </Field>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="morada-bairro" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                    Morada / Bairro <span className="text-red-500">*</span>
-                  </label>
+                <Field label="Morada / Bairro" required htmlFor="morada-bairro" error={errors.morada}>
                   <input
                     id="morada-bairro"
                     type="text"
                     value={morada}
                     onChange={(e) => setMorada(e.target.value)}
                     placeholder="Onde resides? (Ex: Maianga, Talatona, Cacuaco...)"
-                    className={`w-full bg-stone-950/90 border ${errors.morada ? 'border-red-500' : 'border-stone-800 focus:border-amber-500'} text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600`}
+                    className={inputClass(errors.morada)}
                   />
-                  {errors.morada && <p className="text-xs text-red-400">{errors.morada}</p>}
-                </div>
+                </Field>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="igreja-denominacao" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                    Igreja / Denominação <span className="text-stone-500 text-[10px]">(Opcional)</span>
-                  </label>
+                <Field label="Localização" htmlFor="localizacao" help="Opcional — ajuda o admin a organizar o contacto">
+                  <input
+                    id="localizacao"
+                    type="text"
+                    value={localizacao}
+                    onChange={(e) => setLocalizacao(e.target.value)}
+                    placeholder="Província, município ou zona"
+                    className={baseInputClass}
+                  />
+                </Field>
+
+                <Field label="Igreja / Denominação" htmlFor="igreja-denominacao" help="Opcional">
                   <input
                     id="igreja-denominacao"
                     type="text"
                     value={igreja}
                     onChange={(e) => setIgreja(e.target.value)}
                     placeholder="Se frequentas alguma igreja, qual?"
-                    className="w-full bg-stone-950/90 border border-stone-800 focus:border-amber-500 text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600"
+                    className={baseInputClass}
                   />
-                </div>
+                </Field>
+
+                <Field label="Quem te recomendou?" htmlFor="recomendacao" help="Opcional">
+                  <input
+                    id="recomendacao"
+                    type="text"
+                    value={recomendacao}
+                    onChange={(e) => setRecomendacao(e.target.value)}
+                    placeholder="Nome de quem te recomendou ou como chegaste até nós"
+                    className={baseInputClass}
+                  />
+                </Field>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  <div className="space-y-1.5">
-                    <label htmlFor="faixa-etaria" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                      Faixa Etária
-                    </label>
+                  <Field label="Faixa Etária" htmlFor="faixa-etaria">
                     <select
                       id="faixa-etaria"
                       value={faixaEtaria}
-                      onChange={(e) => setFaixaEtaria(e.target.value as any)}
-                      className="w-full bg-stone-950/90 border border-stone-800 focus:border-amber-500 text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300"
+                      onChange={(e) => setFaixaEtaria(e.target.value as typeof faixaEtaria)}
+                      className={baseInputClass}
                     >
                       <option value="18-25">18-25 anos</option>
                       <option value="26-35">26-35 anos</option>
                       <option value="36-45">36-45 anos</option>
                       <option value="46+">46+ anos</option>
                     </select>
-                  </div>
+                  </Field>
 
-                  <div className="space-y-1.5">
-                    <label htmlFor="como-soube" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                      Como soube do evento?
-                    </label>
+                  <Field label="Como soube do evento?" htmlFor="como-soube">
                     <select
                       id="como-soube"
                       value={comoSoube}
-                      onChange={(e) => setComoSoube(e.target.value as any)}
-                      className="w-full bg-stone-950/90 border border-stone-800 focus:border-amber-500 text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300"
+                      onChange={(e) => setComoSoube(e.target.value as ComoSoubeOption)}
+                      className={baseInputClass}
                     >
                       <option value="Instagram">Instagram</option>
                       <option value="Facebook">Facebook</option>
@@ -326,114 +347,57 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                       <option value="Igreja">Igreja</option>
                       <option value="Outro">Outro</option>
                     </select>
-                  </div>
-
+                  </Field>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label htmlFor="expectativa-texto" className="block text-xs font-bold uppercase tracking-wider text-amber-300">
-                    O que esperas viver nesta imersão? <span className="text-stone-500 text-[10px]">(Opcional)</span>
-                  </label>
+                <Field label="Observações" htmlFor="observacoes" help="Opcional — qualquer detalhe útil para o admin">
+                  <textarea
+                    id="observacoes"
+                    value={observacoes}
+                    onChange={(e) => setObservacoes(e.target.value)}
+                    placeholder="Ex: alergias, necessidade especial, observação logística..."
+                    rows={3}
+                    className={`${baseInputClass} resize-none`}
+                  />
+                </Field>
+
+                <Field label="O que esperas viver nesta imersão?" htmlFor="expectativa-texto" help="Opcional">
                   <textarea
                     id="expectativa-texto"
                     value={expectativa}
                     onChange={(e) => setExpectativa(e.target.value)}
-                    placeholder="Partilha o teu coração ou o que procuras curar/viver neste dia espiritual..."
+                    placeholder="Partilha o teu coração ou o que procuras viver neste dia espiritual..."
                     rows={3}
-                    className="w-full bg-stone-950/90 border border-stone-800 focus:border-amber-500 text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600 resize-none"
+                    className={`${baseInputClass} resize-none`}
                   />
-                </div>
+                </Field>
 
-                {/* SEÇÃO: CONVIDAR AMIGAS */}
                 <div className="space-y-3 p-4 bg-stone-950/50 rounded-2xl border border-amber-500/10">
                   <div className="flex items-center gap-2 mb-2">
                     <Gift className="w-5 h-5 text-amber-500" />
                     <label className="text-xs font-bold uppercase tracking-wider text-amber-300">
-                      Queres ganhar brindes? Convida amigas!
+                      Pódio de Prémios
                     </label>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setQuerConvidar(!querConvidar);
-                        if (querConvidar) setMetaConvidadas(null);
-                      }}
-                      className={`relative w-12 h-6 rounded-full transition-all duration-200 cursor-pointer ${
-                        querConvidar ? 'bg-amber-500' : 'bg-stone-700'
-                      }`}
-                    >
-                      <span
-                        className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
-                          querConvidar ? 'translate-x-6' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-sm text-stone-300">
-                      Quero convidar amigas
-                    </span>
+                  <p className="text-[11px] text-stone-400">
+                    Não existe meta fixa. No final, as 3 mulheres que trouxerem mais convidadas levam os prémios do pódio.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="p-3 rounded-xl border border-amber-500/20 bg-amber-500/5">
+                      <span className="block text-[10px] uppercase tracking-wider text-amber-300">1º lugar</span>
+                      <span className="block text-sm font-bold text-amber-100">Bíblia</span>
+                    </div>
+                    <div className="p-3 rounded-xl border border-stone-800 bg-stone-950/50">
+                      <span className="block text-[10px] uppercase tracking-wider text-stone-500">2º lugar</span>
+                      <span className="block text-sm font-bold text-stone-200">Agenda</span>
+                    </div>
+                    <div className="p-3 rounded-xl border border-stone-800 bg-stone-950/50">
+                      <span className="block text-[10px] uppercase tracking-wider text-stone-500">3º lugar</span>
+                      <span className="block text-sm font-bold text-stone-200">T-shirt</span>
+                    </div>
                   </div>
-
-                  {querConvidar && (
-                    <>
-                      <p className="text-[11px] text-stone-400">
-                        Selecione quantas amigas vais convidar. Receberás um link exclusivo para partilhar!
-                      </p>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {META_OPTIONS.map((option) => (
-                          <button
-                            key={option.value}
-                            type="button"
-                            onClick={() => setMetaConvidadas(option.value)}
-                            className={`p-3 rounded-xl border text-center transition-all duration-200 cursor-pointer ${
-                              metaConvidadas === option.value
-                                ? 'border-amber-500 bg-amber-500/10 shadow-[0_0_15px_rgba(234,88,12,0.2)]'
-                                : 'border-stone-800 bg-stone-950/50 hover:border-stone-700'
-                            }`}
-                          >
-                            <span className={`block text-lg font-bold ${
-                              metaConvidadas === option.value ? 'text-amber-400' : 'text-stone-300'
-                            }`}>
-                              {option.label}
-                            </span>
-                            <span className="block text-[9px] text-stone-500 uppercase mt-1">
-                              {option.prize}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-
-                      <div className="mt-3 p-3 bg-stone-900/50 rounded-xl border border-stone-800/50">
-                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-2">
-                          Niveis de Premios
-                        </p>
-                        <div className="space-y-1 text-[10px]">
-                          <div className="flex justify-between text-stone-400">
-                            <span>3 amigas</span>
-                            <span className="text-amber-300">Camisa Mulheres de Fogo</span>
-                          </div>
-                          <div className="flex justify-between text-stone-400">
-                            <span>6 amigas</span>
-                            <span className="text-amber-300">Agenda Personalizada</span>
-                          </div>
-                          <div className="flex justify-between text-stone-400">
-                            <span>10 amigas</span>
-                            <span className="text-amber-300">Agenda + Camisa</span>
-                          </div>
-                          <div className="flex justify-between text-stone-400">
-                            <span>15 amigas</span>
-                            <span className="text-amber-300 font-bold">Agenda + Camisa + Biblia *</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] text-stone-500 italic">
-                        * Nao te preocupes se nao atingires a meta. O importante e o coracao de convidar!
-                      </p>
-                    </>
-                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -455,9 +419,7 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                   {errors.aceitouTermos && <p className="text-xs text-red-400 mt-1">{errors.aceitouTermos}</p>}
                 </div>
 
-                {errors.submit && (
-                  <p className="text-xs text-red-400 text-center">{errors.submit}</p>
-                )}
+                {errors.submit && <p className="text-xs text-red-400 text-center">{errors.submit}</p>}
 
                 <button
                   id="btn-confirmar-inscricao"
@@ -483,7 +445,6 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                   <ShieldCheck className="w-4 h-4 text-amber-500/60" />
                   <span>Inscrição Segura • Canal Oficial WEX 2026</span>
                 </div>
-
               </form>
             </motion.div>
           ) : (
@@ -495,7 +456,7 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
               className="bg-stone-900 border-2 border-amber-500/40 rounded-3xl p-8 md:p-12 text-center shadow-2xl relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-amber-500 to-orange-500" />
-              
+
               <div className="inline-flex p-4 bg-orange-950/50 border border-orange-500/30 rounded-full mb-6">
                 <Flame className="w-10 h-10 text-orange-500 animate-bounce" />
               </div>
@@ -503,39 +464,33 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
               <h3 className="text-2xl md:text-3xl font-black font-serif text-amber-100">
                 A tua vaga está reservada!
               </h3>
-              
+
               <p className="mt-4 text-stone-300 text-sm md:text-base leading-relaxed max-w-sm mx-auto">
                 Glória a Deus, mulher! Em breve entraremos em contacto via WhatsApp com mais detalhes sobre a Imersão WEX.
               </p>
 
-              {/* Link exclusivo */}
               <div className="mt-8 p-4 bg-stone-950 rounded-2xl border border-stone-800">
                 <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-2">
-                  🔗 Teu Link Exclusivo de Convidada
+                  🔗 Teu link exclusivo
                 </p>
                 <div className="flex items-center gap-2 bg-stone-900 p-3 rounded-xl border border-stone-800">
                   <input
                     readOnly
-                    value={getReferralLink(referralCode)}
+                    value={directLink}
                     className="flex-1 bg-transparent text-amber-200 text-xs font-mono focus:outline-none truncate"
                   />
                   <button
-                    onClick={handleCopyLink}
+                    onClick={() => copyToClipboard(directLink, 'direct')}
                     className="p-2 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-stone-950 rounded-lg transition-all cursor-pointer"
                   >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {copiedSource === 'direct' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* QR Code */}
               <div className="mt-6 flex justify-center">
                 <div className="p-4 bg-white rounded-2xl">
-                  <QRCodeSVG
-                    value={getReferralLink(referralCode)}
-                    size={140}
-                    level="M"
-                  />
+                  <QRCodeSVG value={directLink} size={140} level="M" />
                 </div>
               </div>
 
@@ -543,22 +498,48 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
                 <p className="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-2">
                   📋 Partilha este texto:
                 </p>
-                <p className="text-xs text-stone-400 bg-stone-900 p-3 rounded-xl text-left">
-                  {getWhatsAppShareText(nome, referralCode)}
+                <p className="text-xs text-stone-400 bg-stone-900 p-3 rounded-xl text-left whitespace-pre-wrap">
+                  {getWhatsAppShareText(nome, referralCode, 'whatsapp')}
                 </p>
               </div>
 
-              <div className="mt-8 flex flex-col md:flex-row gap-3 justify-center">
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-3">
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent(getWhatsAppShareText(nome, referralCode))}`}
+                  href={`https://wa.me/?text=${encodeURIComponent(getWhatsAppShareText(nome, referralCode, 'whatsapp'))}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-green-600 to-green-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Compartilhar no WhatsApp</span>
+                  <span>WhatsApp</span>
                 </a>
-                
+
+                <button
+                  onClick={shareOnFacebook}
+                  className="px-5 py-3 rounded-xl bg-[#1877F2] text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
+                >
+                  <Facebook className="w-4 h-4" />
+                  <span>Facebook</span>
+                </button>
+
+                <button
+                  onClick={shareOnInstagram}
+                  className="px-5 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
+                >
+                  <Instagram className="w-4 h-4" />
+                  <span>Instagram</span>
+                </button>
+
+                <button
+                  onClick={() => copyToClipboard(directLink, 'copy')}
+                  className="px-5 py-3 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/30 text-stone-300 font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  {copiedSource === 'copy' ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+                  <span>{copiedSource === 'copy' ? 'Copiado' : 'Copiar link'}</span>
+                </button>
+              </div>
+
+              <div className="mt-8 flex justify-center">
                 <button
                   onClick={handleResetForm}
                   className="px-6 py-3 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/30 text-stone-300 font-bold text-xs uppercase tracking-wider transition-all duration-200 cursor-pointer"
@@ -569,8 +550,40 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
             </motion.div>
           )}
         </AnimatePresence>
-
       </div>
     </section>
-  );
+  )
+}
+
+function Field({
+  label,
+  htmlFor,
+  required = false,
+  help,
+  error,
+  children,
+}: {
+  label: string
+  htmlFor: string
+  required?: boolean
+  help?: string
+  error?: string
+  children: React.ReactNode
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={htmlFor} className="block text-xs font-bold uppercase tracking-wider text-amber-300">
+        {label} {required && <span className="text-red-500">*</span>}
+        {help && <span className="ml-2 text-stone-500 text-[10px] normal-case">{help}</span>}
+      </label>
+      {children}
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  )
+}
+
+const baseInputClass = 'w-full bg-stone-950/90 border border-stone-800 focus:border-amber-500 text-stone-100 rounded-xl px-4 py-3 text-sm focus:outline-none transition-all duration-300 placeholder-stone-600'
+
+function inputClass(error?: string) {
+  return `${baseInputClass} ${error ? 'border-red-500 focus:border-red-500' : ''}`
 }
