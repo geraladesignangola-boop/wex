@@ -181,3 +181,19 @@ export const PRIZE_NAMES: Record<PrizeName, string> = {
   agenda: '2º lugar - Agenda',
   camisa: '3º lugar - T-shirt',
 }
+
+export interface DailyRegistration {
+  date: string
+  day_of_week: string
+  count: number
+}
+
+export interface DailyClick {
+  date: string
+  day_of_week: string
+  total: number
+  whatsapp: number
+  facebook: number
+  instagram: number
+  direct: number
+}
