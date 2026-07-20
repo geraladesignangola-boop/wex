@@ -28,6 +28,7 @@ import {
   Link2,
   Building2,
   NotebookPen,
+  UserCheck,
 } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { getCurrentAdmin, signInAdmin, signOut } from '../lib/auth'
@@ -44,6 +45,7 @@ import {
 } from '../types/database'
 import AdminSidebar, { AdminTab } from '../components/admin/AdminSidebar'
 import AdminDashboard from '../components/admin/AdminDashboard'
+import CheckInDashboard from '../components/admin/CheckInDashboard'
 import PremiosPage from '../components/admin/PremiosPage'
 import DefinicoesPage from '../components/admin/DefinicoesPage'
 
@@ -68,7 +70,7 @@ export default function AdminPanel() {
   const [participants, setParticipants] = useState<AdminParticipantOverview[]>([])
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard')
   const [searchTerm, setSearchTerm] = useState('')
-  const [participantFilter, setParticipantFilter] = useState<'all' | 'podium' | 'linked' | 'no_links'>('all')
+  const [participantFilter, setParticipantFilter] = useState<'all' | 'podium' | 'linked' | 'no_links' | 'group_added' | 'group_pending'>('all')
 
   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null)
   const [participantDetail, setParticipantDetail] = useState<ParticipantDetail | null>(null)
@@ -136,6 +138,8 @@ export default function AdminPanel() {
         || (participantFilter === 'podium' && participant.prize_achieved)
         || (participantFilter === 'linked' && participant.total_links > 1)
         || (participantFilter === 'no_links' && participant.total_links <= 1)
+        || (participantFilter === 'group_added' && participant.group_added_at)
+        || (participantFilter === 'group_pending' && !participant.group_added_at)
 
       return matchesSearch && matchesFilter
     })
@@ -224,7 +228,14 @@ export default function AdminPanel() {
     }
   }
 
-  const handleAddToGroup = (participant: AdminParticipantOverview) => {
+  const handleAddToGroup = async (participant: AdminParticipantOverview) => {
+    if (participant.group_added_at) {
+      const adicionadoPor = participant.group_added_by_nome || 'outro admin'
+      const data = new Date(participant.group_added_at).toLocaleDateString('pt-PT')
+      alert(`Este participante já foi adicionado ao grupo por ${adicionadoPor} em ${data}.`)
+      return
+    }
+    
     if (!whatsappGroupLink) {
       alert('Configura o link do grupo de WhatsApp em Definicoes primeiro.')
       return
@@ -234,8 +245,27 @@ export default function AdminPanel() {
       alert('Este participante nao tem numero de WhatsApp registado.')
       return
     }
-    const msg = `Ola ${participant.nome}! 🔥\n\nVimos que te inscreveste para participar na Imersao WEX Mulheres de Fogo e estamos muito contentes! 🔥\n\nPara ficares por dentro de todas as novidades, actualizacoes do evento e conteudos exclusivos, criamos um grupo oficial so para inscritas.\n\nEntra ja:\n${whatsappGroupLink}\n\nAguardamos-te! 🔥 Mulheres de Fogo 🔥`
+    const msg = `*Woman Experience 2026*\n\nOlá, *${participant.nome}*!\n\nA sua inscrição para a *Imersão WEX – Woman Experience 2026* foi confirmada com sucesso.\n\nEstamos muito felizes por tê-la connosco nesta experiência preparada para inspirar, conectar e transformar mulheres extraordinárias.\n\nAgora falta apenas um pequeno passo para que não perca este momento especial.\n\n*Reserve este momento para si*\nhttps://www.addevent.com/event/qmlbjsm0cn43\n\nAo guardar o evento no seu calendário, receberá lembretes automáticos para que possa organizar-se com tranquilidade.\n\n*Faça parte da nossa comunidade oficial*\n${whatsappGroupLink}\n\nNo grupo vamos partilhar:\n- Bastidores da preparação\n- Informações importantes\n- Novidades exclusivas\n- Orientações para o dia do evento\n\n*08 de Agosto de 2026*\nMediateca de Luanda\n\nEsperamos por si!\n\nCom carinho,\n*Equipa Woman Experience*`
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank')
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      await supabase
+        .from('inscricoes')
+        .update({
+          group_added_at: new Date().toISOString(),
+          group_added_by: user?.id
+        })
+        .eq('id', participant.id)
+      
+      setParticipants(prev => 
+        prev.map(p => p.id === participant.id 
+          ? { ...p, group_added_at: new Date().toISOString(), group_added_by_nome: 'Você' }
+          : p
+        ))
+    } catch (error) {
+      console.error('Erro ao registrar adição ao grupo:', error)
+    }
   }
 
   const handleNotifySelected = () => {
@@ -253,7 +283,7 @@ export default function AdminPanel() {
   const handleSendToSingle = (participant: AdminParticipantOverview) => {
     const digits = (participant.whatsapp || '').replace(/\D/g, '')
     if (!digits) return
-    const msg = `Ola ${participant.nome}! 🔥\n\nVimos que te inscreveste para participar na Imersao WEX Mulheres de Fogo e estamos muito contentes! 🔥\n\nPara ficares por dentro de todas as novidades, actualizacoes do evento e conteudos exclusivos, criamos um grupo oficial so para inscritas.\n\nEntra ja:\n${whatsappGroupLink}\n\nAguardamos-te! 🔥 Mulheres de Fogo 🔥`
+    const msg = `*Woman Experience 2026*\n\nOlá, *${participant.nome}*!\n\nA sua inscrição para a *Imersão WEX – Woman Experience 2026* foi confirmada com sucesso.\n\nEstamos muito felizes por tê-la connosco nesta experiência preparada para inspirar, conectar e transformar mulheres extraordinárias.\n\nAgora falta apenas um pequeno passo para que não perca este momento especial.\n\n*Reserve este momento para si*\nhttps://www.addevent.com/event/qmlbjsm0cn43\n\nAo guardar o evento no seu calendário, receberá lembretes automáticos para que possa organizar-se com tranquilidade.\n\n*Faça parte da nossa comunidade oficial*\n${whatsappGroupLink}\n\nNo grupo vamos partilhar:\n- Bastidores da preparação\n- Informações importantes\n- Novidades exclusivas\n- Orientações para o dia do evento\n\n*08 de Agosto de 2026*\nMediateca de Luanda\n\nEsperamos por si!\n\nCom carinho,\n*Equipa Woman Experience*`
     window.open(`https://wa.me/${digits}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
@@ -310,6 +340,7 @@ export default function AdminPanel() {
       latest_link_created_at: participant.created_at,
       prize_level: null,
       prize_achieved: false,
+      group_added_by_nome: null,
     }))
   }
 
@@ -767,9 +798,13 @@ export default function AdminPanel() {
               {activeTab === 'participants' && 'Participantes'}
               {activeTab === 'prizes' && 'Premios'}
               {activeTab === 'settings' && 'Definicoes'}
+              {activeTab === 'checkin' && 'Check-in'}
             </h1>
             {activeTab === 'dashboard' && (
               <p className="text-[11px] text-stone-500 mt-0.5 hidden sm:block">Campanha de inscricao -- atualizado agora</p>
+            )}
+            {activeTab === 'checkin' && (
+              <p className="text-[11px] text-stone-500 mt-0.5 hidden sm:block">Painel de controle do dia do evento</p>
             )}
           </div>
           <div className="flex items-center gap-1.5 md:gap-2">
@@ -782,6 +817,18 @@ export default function AdminPanel() {
                 <span className="hidden sm:inline">Notificar todas</span>
                 <span className="sm:hidden">Notificar</span>
               </button>
+            )}
+            {activeTab === 'checkin' && (
+              <a
+                href="/checkin"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-3.5 py-1.5 bg-amber-500 text-stone-950 rounded-lg text-[11px] md:text-xs font-bold transition-colors hover:bg-amber-400"
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Abrir Check-in</span>
+                <span className="sm:hidden">Abrir</span>
+              </a>
             )}
             {activeTab === 'participants' && (
               <button
@@ -866,6 +913,10 @@ export default function AdminPanel() {
 
           {activeTab === 'settings' && (
             <DefinicoesPage stats={stats} whatsappGroupLink={whatsappGroupLink} onWhatsappGroupLinkChange={setWhatsappGroupLink} />
+          )}
+
+          {activeTab === 'checkin' && (
+            <CheckInDashboard />
           )}
         </main>
       </div>
@@ -1133,7 +1184,7 @@ function ParticipantsSection({
   participants: AdminParticipantOverview[]
   searchTerm: string
   onSearchChange: (v: string) => void
-  participantFilter: 'all' | 'podium' | 'linked' | 'no_links'
+  participantFilter: 'all' | 'podium' | 'linked' | 'no_links' | 'group_added' | 'group_pending'
   onFilterChange: (v: 'all' | 'podium' | 'linked' | 'no_links') => void
   podiumPositionById: Map<string, number>
   onSelectParticipant: (id: string) => void
@@ -1171,6 +1222,8 @@ function ParticipantsSection({
             <option value="podium">Podio</option>
             <option value="linked">Com links extras</option>
             <option value="no_links">Sem links extras</option>
+            <option value="group_added">Ja no grupo</option>
+            <option value="group_pending">Pendente grupo</option>
           </select>
           {selectedIds.size > 0 && (
             <button
@@ -1293,13 +1346,20 @@ function ParticipantsSection({
                     {new Date(participant.created_at).toLocaleDateString('pt-PT')}
                   </td>
                   <td className="px-4 py-3 align-top">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAddToGroup(participant) }}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-green-600/10 text-green-400 hover:bg-green-600/20 rounded-lg text-[11px] font-semibold transition-colors"
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      Adicionar
-                    </button>
+                    {participant.group_added_at ? (
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-stone-800 text-stone-400 rounded-lg text-[11px] font-semibold">
+                        <CheckCircle className="w-3 h-3" />
+                        Adicionado
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAddToGroup(participant) }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-green-600/10 text-green-400 hover:bg-green-600/20 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        Adicionar
+                      </button>
+                    )}
                   </td>
                 </tr>
               )
@@ -1382,13 +1442,20 @@ function ParticipantsSection({
                     <p className="text-[11px] text-stone-500 truncate">
                       {participant.email}
                     </p>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleAddToGroup(participant) }}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-green-600/10 text-green-400 rounded-lg text-[10px] font-semibold flex-shrink-0"
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      Grupo
-                    </button>
+                    {participant.group_added_at ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-stone-800 text-stone-400 rounded-lg text-[10px] font-semibold flex-shrink-0">
+                        <CheckCircle className="w-3 h-3" />
+                        Adicionado
+                      </span>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleAddToGroup(participant) }}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-green-600/10 text-green-400 rounded-lg text-[10px] font-semibold flex-shrink-0"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        Grupo
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1585,10 +1652,24 @@ function ParticipantModal({
                     </button>
                     <button
                       onClick={onAddToGroup}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-green-600/10 border border-green-600/30 text-green-400 hover:bg-green-600/20 text-sm font-semibold transition-colors"
+                      disabled={!!participantDetail.participant.group_added_at}
+                      className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                        participantDetail.participant.group_added_at
+                          ? 'bg-stone-800 text-stone-400 cursor-not-allowed'
+                          : 'bg-green-600/10 border border-green-600/30 text-green-400 hover:bg-green-600/20'
+                      }`}
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      Adicionar ao grupo
+                      {participantDetail.participant.group_added_at ? (
+                        <>
+                          <CheckCircle className="w-4 h-4" />
+                          Adicionado{participantDetail.participant.group_added_by_nome ? ` por ${participantDetail.participant.group_added_by_nome}` : ''}
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="w-4 h-4" />
+                          Adicionar ao grupo
+                        </>
+                      )}
                     </button>
                   </div>
 

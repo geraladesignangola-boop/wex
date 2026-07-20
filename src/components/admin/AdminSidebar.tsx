@@ -9,10 +9,11 @@ import {
   Trophy,
   Menu,
   X,
+  UserCheck,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'motion/react'
 
-export type AdminTab = 'dashboard' | 'ranking' | 'notifications' | 'participants' | 'prizes' | 'settings'
+export type AdminTab = 'dashboard' | 'ranking' | 'notifications' | 'participants' | 'prizes' | 'settings' | 'checkin'
 
 interface AdminSidebarProps {
   activeTab: AdminTab
@@ -23,6 +24,7 @@ interface AdminSidebarProps {
 
 const NAV_ITEMS: { id: AdminTab; label: string; icon: React.ElementType; group?: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'checkin', label: 'Check-in', icon: UserCheck },
   { id: 'ranking', label: 'Ranking', icon: Crown },
   { id: 'notifications', label: 'Notificacoes', icon: Bell },
   { id: 'participants', label: 'Participantes', icon: Users },

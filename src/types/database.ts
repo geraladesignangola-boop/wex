@@ -17,6 +17,8 @@ export interface Inscricao {
   meta_convidadas: number | null
   convidadas_count: number
   referred_by?: string | null
+  group_added_at?: string | null
+  group_added_by?: string | null
   created_at: string
   updated_at: string
 }
@@ -148,6 +150,7 @@ export interface AdminParticipantOverview extends Inscricao {
   latest_link_created_at?: string | null
   prize_level?: string | null
   prize_achieved: boolean
+  group_added_by_nome?: string | null
 }
 
 export interface ParticipantDetailSummary {
@@ -168,6 +171,7 @@ export interface ParticipantDetail {
     instagram_clicks?: number
     whatsapp_clicks?: number
     direct_clicks?: number
+    group_added_by_nome?: string | null
   }
   links: ReferralLink[]
   notifications: Notification[]
@@ -196,4 +200,41 @@ export interface DailyClick {
   facebook: number
   instagram: number
   direct: number
+}
+
+// Check-in system types
+export interface CheckInParticipant {
+  id: string
+  nome: string
+  email: string
+  telefone: string
+  whatsapp: string
+  checked_in: boolean
+  checked_in_at: string | null
+  checked_in_by: string | null
+}
+
+export interface CheckInStats {
+  total_inscritos: number
+  total_checked_in: number
+  percentual: number
+}
+
+export interface CheckInReportEntry {
+  id: string
+  nome: string
+  email: string
+  telefone: string
+  whatsapp: string
+  checked_in: boolean
+  checked_in_at: string | null
+  checked_in_by: string | null
+  created_at: string
+}
+
+export interface OfflineCheckIn {
+  participant_id: string
+  participant_nome: string
+  staff_name: string
+  timestamp: string
 }

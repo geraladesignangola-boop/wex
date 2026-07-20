@@ -16,6 +16,7 @@ import SeloMulheresDeFogo from './components/SeloMulheresDeFogo';
 // Pages
 import ConvitePage from './pages/ConvitePage';
 import AdminPanel from './pages/AdminPanel';
+import CheckInPage from './pages/CheckInPage';
 import TermosPage from './pages/TermosPage';
 
 function MainPage() {
@@ -344,6 +345,7 @@ export default function App() {
         <Route path="/" element={<MainPage />} />
         <Route path="/convite" element={<ConvitePage />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/checkin" element={<CheckInPage />} />
         <Route path="/termos" element={<TermosPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
