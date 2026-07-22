@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Instagram, Facebook, Phone, Mail, ArrowUp, Menu, X, Check } from 'lucide-react';
+import { Flame, Instagram, Facebook, Phone, Mail, ArrowUp, Menu, X, Check, Lock } from 'lucide-react';
 
 // Custom Components
 import Hero from './components/Hero';
@@ -19,9 +19,30 @@ import AdminPanel from './pages/AdminPanel';
 import CheckInPage from './pages/CheckInPage';
 import TermosPage from './pages/TermosPage';
 
+// Lib
+import { supabase, isSupabaseConfigured } from './lib/supabase';
+
 function MainPage() {
   const [showMobileCta, setShowMobileCta] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [inscricoesAbertas, setInscricoesAbertas] = useState(true);
+
+  useEffect(() => {
+    const fetchInscricoesStatus = async () => {
+      if (!isSupabaseConfigured) return
+      try {
+        const { data } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'inscricoes_abertas')
+          .single()
+        if (data?.value) setInscricoesAbertas(data.value !== 'false')
+      } catch {
+        // default to open
+      }
+    }
+    fetchInscricoesStatus()
+  }, [])
 
   useEffect(() => {
     const hash = window.location.hash.replace('#', '');
@@ -127,13 +148,20 @@ function MainPage() {
           </nav>
 
           <div className="hidden md:block">
-            <button
-              id="header-cta-btn"
-              onClick={() => scrollToSection('form-section')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white font-bold text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-[0_4px_15px_rgba(234,88,12,0.3)] cursor-pointer"
-            >
-              Garantir Vaga 🔥
-            </button>
+            {inscricoesAbertas ? (
+              <button
+                id="header-cta-btn"
+                onClick={() => scrollToSection('form-section')}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white font-bold text-[10px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all duration-200 shadow-[0_4px_15px_rgba(234,88,12,0.3)] cursor-pointer"
+              >
+                Garantir Vaga <Flame className="w-3 h-3 inline" />
+              </button>
+            ) : (
+              <span className="px-5 py-2.5 rounded-xl bg-stone-800 text-stone-500 font-bold text-[10px] uppercase tracking-widest inline-flex items-center gap-1.5">
+                <Lock className="w-3 h-3" />
+                Inscrições Encerradas
+              </span>
+            )}
           </div>
 
           <button
@@ -190,9 +218,14 @@ function MainPage() {
                 <button
                   id="mobile-menu-cta"
                   onClick={() => scrollToSection('form-section')}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white text-center font-bold text-xs uppercase tracking-widest shadow-[0_4px_15px_rgba(234,88,12,0.3)]"
+                  disabled={!inscricoesAbertas}
+                  className={`w-full py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${
+                    inscricoesAbertas
+                      ? 'bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white shadow-[0_4px_15px_rgba(234,88,12,0.3)]'
+                      : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                  }`}
                 >
-                  Garantir Vaga 🔥
+                  {inscricoesAbertas ? 'Garantir Vaga 🔥' : 'Inscrições Encerradas'}
                 </button>
               </div>
             </motion.div>
@@ -248,7 +281,7 @@ function MainPage() {
 
           <div className="flex gap-4 mb-8">
             <a 
-              href="https://instagram.com/mulheresdefogo.ao" 
+              href="https://www.instagram.com/muf.mulheresdefogo/" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="p-3 bg-stone-900/50 hover:bg-stone-900 border border-stone-800 hover:border-amber-500/25 rounded-full text-stone-400 hover:text-amber-400 transition-all duration-300"
@@ -257,7 +290,7 @@ function MainPage() {
               <Instagram className="w-5 h-5" />
             </a>
             <a 
-              href="https://facebook.com/mulheresdefogo.ao" 
+              href="https://www.facebook.com/profile.php?id=61583199112349" 
               target="_blank" 
               rel="noopener noreferrer"
               className="p-3 bg-stone-900/50 hover:bg-stone-900 border border-stone-800 hover:border-amber-500/25 rounded-full text-stone-400 hover:text-amber-400 transition-all duration-300"
@@ -284,7 +317,7 @@ function MainPage() {
 
       {/* FLOATING CTA FOR MOBILE DEVICES */}
       <AnimatePresence>
-        {showMobileCta && (
+        {showMobileCta && inscricoesAbertas && (
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
