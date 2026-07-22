@@ -12,6 +12,7 @@ import {
   Facebook,
   Instagram,
   Link2,
+  Lock,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
@@ -46,12 +47,33 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
   const [lastSubmitTime, setLastSubmitTime] = useState(0)
   const [referralCode, setReferralCode] = useState('')
   const [copiedSource, setCopiedSource] = useState<string | null>(null)
+  const [inscricoesAbertas, setInscricoesAbertas] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (referredByCode) {
       setComoSoube('Indicação de amiga')
     }
   }, [referredByCode])
+
+  useEffect(() => {
+    const fetchInscricoesStatus = async () => {
+      if (!isSupabaseConfigured) {
+        setInscricoesAbertas(true)
+        return
+      }
+      try {
+        const { data } = await supabase
+          .from('app_settings')
+          .select('value')
+          .eq('key', 'inscricoes_abertas')
+          .single()
+        setInscricoesAbertas(data?.value !== 'false')
+      } catch {
+        setInscricoesAbertas(true)
+      }
+    }
+    fetchInscricoesStatus()
+  }, [])
 
   const directLink = useMemo(() => getReferralLink(referralCode), [getReferralLink, referralCode])
   const whatsappLink = useMemo(() => getReferralLink(referralCode, 'whatsapp'), [getReferralLink, referralCode])
@@ -68,6 +90,57 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
               As variáveis de ambiente do Supabase não estão configuradas no Vercel.
             </p>
           </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (inscricoesAbertas === false) {
+    return (
+      <section id="form-section" className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950 relative overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-amber-950/20 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-stone-950 to-transparent pointer-events-none" />
+        <div className="max-w-xl mx-auto relative z-10 text-center">
+          <div className="inline-flex p-4 bg-stone-900 border border-stone-800 rounded-full mb-6">
+            <Lock className="w-8 h-8 text-stone-500" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black font-serif tracking-tight text-stone-300">
+            Inscrições Encerradas
+          </h2>
+          <p className="mt-4 text-stone-400 text-sm md:text-base leading-relaxed max-w-md mx-auto">
+            As inscrições para a Imersão WEX Mulheres de Fogo estão encerradas.
+            Acompanha as novidades nas nossas redes sociais.
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <a
+              href="https://www.instagram.com/muf.mulheresdefogo/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
+            >
+              <Instagram className="w-4 h-4" />
+              <span>Instagram</span>
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61583199112349"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-5 py-3 rounded-xl bg-[#1877F2] text-white font-bold text-xs uppercase tracking-wider transition-all duration-200 hover:brightness-110 flex items-center justify-center gap-2"
+            >
+              <Facebook className="w-4 h-4" />
+              <span>Facebook</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (inscricoesAbertas === null) {
+    return (
+      <section id="form-section" className="py-24 px-4 bg-gradient-to-b from-stone-950 via-stone-900 to-stone-950">
+        <div className="max-w-xl mx-auto text-center">
+          <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto" />
         </div>
       </section>
     )
@@ -125,6 +198,12 @@ export default function InscricaoForm({ referredByCode }: InscricaoFormProps = {
         if (error.message.includes('duplicate_registration')) {
           setErrors({ email: 'Este email já está registado' })
           setIsSubmitting(false)
+          return
+        }
+        if (error.message.includes('inscricoes_fechadas')) {
+          setErrors({ submit: 'As inscrições estão encerradas.' })
+          setIsSubmitting(false)
+          setInscricoesAbertas(false)
           return
         }
         throw error

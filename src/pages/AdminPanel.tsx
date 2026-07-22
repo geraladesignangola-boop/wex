@@ -85,6 +85,7 @@ export default function AdminPanel() {
   const [selectedParticipantIds, setSelectedParticipantIds] = useState<Set<string>>(new Set())
   const [showBulkSendModal, setShowBulkSendModal] = useState(false)
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
+  const [inscricoesAbertas, setInscricoesAbertas] = useState(true)
 
   useEffect(() => {
     const restoreSession = async () => {
@@ -99,6 +100,12 @@ export default function AdminPanel() {
             .eq('key', 'whatsapp_group_link')
             .single()
           if (setting?.value) setWhatsappGroupLink(setting.value)
+          const { data: inscricoesSetting } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'inscricoes_abertas')
+            .single()
+          if (inscricoesSetting?.value) setInscricoesAbertas(inscricoesSetting.value !== 'false')
         } else {
           await signOut()
         }
@@ -123,6 +130,14 @@ export default function AdminPanel() {
     }
     saveGroupLink()
   }, [whatsappGroupLink, isAuthenticated])
+
+  const handleToggleInscricoes = async () => {
+    const newValue = !inscricoesAbertas
+    setInscricoesAbertas(newValue)
+    await supabase
+      .from('app_settings')
+      .upsert({ key: 'inscricoes_abertas', value: String(newValue) }, { onConflict: 'key' })
+  }
 
   const filteredParticipants = useMemo(() => {
     const term = searchTerm.trim().toLowerCase()
@@ -912,7 +927,7 @@ export default function AdminPanel() {
           )}
 
           {activeTab === 'settings' && (
-            <DefinicoesPage stats={stats} whatsappGroupLink={whatsappGroupLink} onWhatsappGroupLinkChange={setWhatsappGroupLink} />
+            <DefinicoesPage stats={stats} whatsappGroupLink={whatsappGroupLink} onWhatsappGroupLinkChange={setWhatsappGroupLink} inscricoesAbertas={inscricoesAbertas} onToggleInscricoes={handleToggleInscricoes} />
           )}
 
           {activeTab === 'checkin' && (

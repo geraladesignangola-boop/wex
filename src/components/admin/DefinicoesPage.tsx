@@ -11,6 +11,8 @@ import {
   Shield,
   ExternalLink,
   MessageCircle,
+  Lock,
+  LockOpen,
 } from 'lucide-react'
 import { DashboardStats } from '../../types/database'
 
@@ -18,9 +20,11 @@ interface DefinicoesPageProps {
   stats: DashboardStats | null
   whatsappGroupLink: string
   onWhatsappGroupLinkChange: (value: string) => void
+  inscricoesAbertas: boolean
+  onToggleInscricoes: () => void
 }
 
-export default function DefinicoesPage({ stats, whatsappGroupLink, onWhatsappGroupLinkChange }: DefinicoesPageProps) {
+export default function DefinicoesPage({ stats, whatsappGroupLink, onWhatsappGroupLinkChange, inscricoesAbertas, onToggleInscricoes }: DefinicoesPageProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -31,6 +35,40 @@ export default function DefinicoesPage({ stats, whatsappGroupLink, onWhatsappGro
         <p className="text-sm text-stone-500 mt-1">
           Informacoes gerais e configuracoes da campanha de inscricao.
         </p>
+      </div>
+
+      <div className="bg-stone-900 border border-stone-800 rounded-2xl p-5 space-y-4">
+        <h3 className="text-sm font-bold text-stone-100 flex items-center gap-2">
+          {inscricoesAbertas ? (
+            <LockOpen className="w-4 h-4 text-green-500" />
+          ) : (
+            <Lock className="w-4 h-4 text-red-500" />
+          )}
+          Controlo de Inscrições
+        </h3>
+        <p className="text-[13px] text-stone-400">
+          Quando fechadas, ninguém consegue inscrever-se no site. O formulário fica desabilitado com a mensagem "Inscrições Encerradas".
+        </p>
+        <div className="flex items-center justify-between p-4 bg-stone-950/50 rounded-xl border border-stone-800">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${inscricoesAbertas ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-sm text-stone-200 font-medium">
+              {inscricoesAbertas ? 'Inscrições Abertas' : 'Inscrições Fechadas'}
+            </span>
+          </div>
+          <button
+            onClick={onToggleInscricoes}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none cursor-pointer ${
+              inscricoesAbertas ? 'bg-green-600' : 'bg-stone-700'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                inscricoesAbertas ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,7 +133,7 @@ export default function DefinicoesPage({ stats, whatsappGroupLink, onWhatsappGro
           </div>
           <div className="rounded-xl border border-stone-800 bg-stone-950/50 p-3">
             <p className="text-[10px] uppercase tracking-wider text-stone-600 font-bold mb-1">Instagram</p>
-            <p className="text-[13px] text-stone-200">@mulheresdefogo.ao</p>
+            <p className="text-[13px] text-stone-200">@muf.mulheresdefogo</p>
           </div>
           <div className="rounded-xl border border-stone-800 bg-stone-950/50 p-3">
             <p className="text-[10px] uppercase tracking-wider text-stone-600 font-bold mb-1">Facebook</p>
